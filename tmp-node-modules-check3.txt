@@ -1,0 +1,28 @@
+﻿
+> khoifee-dev@1.0.0 dev
+> concurrently -k -n api,web "node --experimental-sqlite server/index.mjs" "vite --host 127.0.0.1"
+
+[api] (node:36088) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+[api] (Use `node --trace-warnings ...` to show where the warning was created)
+[api] KhoifeeDev first-run setup token: 2dOdIbfEh5CVLKl4bn2LzsI8Bfss80D0-P8g-STx8XQ
+[web] Port 5173 is in use, trying another one...
+[web] 
+[web]   [32m[1mVITE[22m v6.4.6[39m  [2mready in [0m[1m561[22m[2m[0m ms[22m
+[web] 
+[web]   [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5174[22m/[39m
+[api] file:///C:/KhoifeeSite/server/index.mjs:1151
+[api]         `KhoifeeDev server listening on http://${host}:${server.address().port}`,
+[api]                                                                          ^
+[api] 
+[api] TypeError: Cannot read properties of null (reading 'port')
+[api]     at Server.<anonymous> (file:///C:/KhoifeeSite/server/index.mjs:1151:74)
+[api]     at Server.f (C:\KhoifeeSite\node_modules\once\once.js:25:25)
+[api]     at Object.onceWrapper (node:events:633:26)
+[api]     at Server.emit (node:events:530:35)
+[api]     at emitErrorNT (node:net:1943:8)
+[api]     at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+[api] 
+[api] Node.js v22.11.0
+[api] node --experimental-sqlite server/index.mjs exited with code 1
+--> Sending SIGTERM to other processes..
+[web] vite --host 127.0.0.1 exited with code 1

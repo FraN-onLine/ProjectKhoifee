@@ -1,0 +1,37 @@
+{
+  "name": "khoifee-dev",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.11.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"node --experimental-sqlite server/index.mjs\" \"vite --host 127.0.0.1\"",
+    "build": "vite build",
+    "import-build": "node --experimental-sqlite server/import-build.mjs",
+    "start": "cross-env NODE_ENV=production node --experimental-sqlite server/index.mjs",
+    "test": "node --experimental-sqlite --test tests/*.test.mjs",
+    "test:ui": "npm run build && cross-env NODE_OPTIONS=--experimental-sqlite playwright test tests/ui.spec.mjs tests/accessibility.spec.mjs --workers=1"
+  },
+  "dependencies": {
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
+    "cross-env": "^7.0.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "lucide-react": "^0.468.0",
+    "multer": "^2.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "yauzl": "^3.2.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.65.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "vite": "^6.1.0"
+  }
+}
