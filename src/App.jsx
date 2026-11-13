@@ -32,7 +32,7 @@ import Studio from "./Studio";
 export function Brand({ name = "KhoifeeDev" }) {
   return (
     <a className="brand" href="/" aria-label={`${name} home`}>
-      <img src="/favicon.svg" alt="" />
+      <img src="/assets/KhoifeeLogo.jpg" alt="" />
       <span>
         {name === "KhoifeeDev" ? (
           <>
@@ -48,6 +48,7 @@ export function Brand({ name = "KhoifeeDev" }) {
 }
 
 function Header({ site }) {
+  const copy = site.copy;
   const [open, setOpen] = useState(false);
   return (
     <header className="site-header">
@@ -66,20 +67,20 @@ function Header({ site }) {
             href="/"
             onClick={() => setOpen(false)}
           >
-            Home
+            {copy.navHome}
           </a>
           <a href="/#games" onClick={() => setOpen(false)}>
-            Games
+            {copy.navGames}
           </a>
           <a href="/#about" onClick={() => setOpen(false)}>
-            About
+            {copy.navAbout}
           </a>
           <a href="/#community" onClick={() => setOpen(false)}>
-            Community
+            {copy.navCommunity}
           </a>
         </nav>
         <a className="button button-small nav-contact" href="/#contact">
-          Let’s talk <ArrowUpRight size={16} />
+          {copy.navContact} <ArrowUpRight size={16} />
         </a>
         <button
           className="icon-button menu-toggle"
@@ -142,6 +143,7 @@ function Socials({ socials, full = false }) {
 }
 
 function Footer({ site }) {
+  const copy = site.copy;
   return (
     <footer className="site-footer container">
       <div className="footer-top">
@@ -151,26 +153,13 @@ function Footer({ site }) {
       </div>
       <div className="footer-bottom">
         <span>
-          © {new Date().getFullYear()} {site.name}. Made with care & a little
-          caffeine.
+          © {new Date().getFullYear()} {site.name}. {copy.footerCopyright}
         </span>
-        <a href="/studio">
-          Creator studio <ArrowUpRight size={12} />
-        </a>
-        <a href="#top">Back to top ↑</a>
+        <a href="#top">{copy.footerBackToTop} ↑</a>
       </div>
       <details className="privacy-details">
-        <summary>Privacy & activity counts</summary>
-        <p>
-          This site counts page views, post opens, play starts, and download
-          clicks. A random ID in this tab’s session storage helps avoid repeat
-          counts; only temporary hashed keys and daily totals are stored in
-          analytics, not IP addresses or browsing histories. Hashed keys expire
-          within 48 hours. Signed-in creator visits and browsers requesting Do
-          Not Track or Global Privacy Control are excluded. Submitted reviews
-          are published only after approval; use a display name you are
-          comfortable sharing publicly.
-        </p>
+        <summary>{copy.privacyTitle}</summary>
+        <p>{copy.privacyDescription}</p>
       </details>
     </footer>
   );
@@ -190,7 +179,13 @@ function Image({ src, alt, ...props }) {
   );
 }
 
-function Highlight({ highlight, games }) {
+function imagePositionStyle(position) {
+  return {
+    objectPosition: `${position?.x ?? 50}% ${position?.y ?? 50}%`,
+  };
+}
+
+function Highlight({ highlight, games, copy }) {
   const game = games.find((item) => item.id === highlight.gameId);
   const href =
     highlight.type === "game" && game
@@ -204,20 +199,21 @@ function Highlight({ highlight, games }) {
         <Image
           src={highlight.image}
           alt={game ? `${game.title} concept illustration` : highlight.title}
+          style={imagePositionStyle(highlight.imagePosition)}
         />
         <span className="art-caption">
           <span className="live-dot" />
           {game?.sample
-            ? "A LITTLE CONCEPT, A LOT OF POSSIBILITY"
-            : highlight.eyebrow || "A LITTLE LOOK AT WHAT’S NEXT"}
+            ? copy.highlightSampleCaption
+            : highlight.eyebrow || copy.highlightDefaultCaption}
         </span>
       </div>
       <div className="round-stamp">
         <Sprout size={28} strokeWidth={1.6} />
         <span>
-          GROW SOMETHING
+          {copy.highlightRoundStampFirst}
           <br />
-          GOOD.
+          {copy.highlightRoundStampSecond}
         </span>
       </div>
       <div className="highlight-card">
@@ -237,11 +233,13 @@ function Highlight({ highlight, games }) {
           <a
             href={href}
             className="icon-button highlight-link"
-            aria-label={`Explore ${highlight.title}`}
+            aria-label={`${copy.highlightExplore} ${highlight.title}`}
+            title={`${copy.highlightExplore} ${highlight.title}`}
             {...(href.startsWith("https:")
               ? { target: "_blank", rel: "noreferrer" }
               : {})}
           >
+            <span>{copy.highlightExplore}</span>
             <ArrowUpRight size={22} />
           </a>
         )}
@@ -250,12 +248,17 @@ function Highlight({ highlight, games }) {
   );
 }
 
-function GameCard({ game }) {
+function GameCard({ game, copy }) {
   const playable = game.versions.some((version) => version.webUrl);
   return (
     <a className="game-card" href={`/games/${game.id}`}>
       <div className="game-card-art">
-        <Image src={game.cover} alt={`${game.title} artwork`} loading="lazy" />
+        <Image
+          src={game.cover}
+          alt={`${game.title} artwork`}
+          loading="lazy"
+          style={imagePositionStyle(game.coverPosition)}
+        />
         <span
           className={`game-status ${game.status === "Released" ? "released" : ""}`}
         >
@@ -264,7 +267,7 @@ function GameCard({ game }) {
         </span>
         {playable && (
           <span className="quick-play">
-            <Play size={16} fill="currentColor" /> Play
+            <Play size={16} fill="currentColor" /> {copy.cardPlay}
           </span>
         )}
         <span className="card-arrow">
@@ -274,26 +277,30 @@ function GameCard({ game }) {
       <div className="game-card-content">
         <div className="game-meta">
           <span>{game.genre}</span>
-          <span>{game.sample ? "SAMPLE CONCEPT" : game.year}</span>
+          <span>          {game.sample ? copy.cardSample : game.year}</span>
         </div>
         <h3>{game.title}</h3>
         <p>{game.summary}</p>
-        <div className="game-card-bottom">
-          <div className="tags">
-            {game.tags.slice(0, 2).map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
+        {(game.tags.length > 0 || game.count > 0) && (
+          <div className="game-card-bottom">
+            <div className="tags">
+              {game.tags.slice(0, 2).map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+            {game.count > 0 && (
+              <span className="rating-small">
+                <Star size={13} fill="currentColor" />
+                {Number(game.rating).toFixed(1)} <small>({game.count})</small>
+              </span>
+            )}
           </div>
-          {game.count > 0 ? (
-            <span className="rating-small">
-              <Star size={13} fill="currentColor" />
-              {Number(game.rating).toFixed(1)} <small>({game.count})</small>
-            </span>
-          ) : (
-            <span className="made-in">
-              <Gamepad2 size={14} /> Godot
-            </span>
-          )}
+        )}
+        <div className="game-card-action">
+          <span>
+            {playable ? copy.cardPlayAction : copy.cardViewAction}
+          </span>
+          <ArrowUpRight size={15} />
         </div>
       </div>
     </a>
@@ -302,16 +309,27 @@ function GameCard({ game }) {
 
 function Home({ content }) {
   const { site, games, posts } = content;
-  const [filter, setFilter] = useState("All games");
+  const copy = site.copy;
+  const [filter, setFilter] = useState("all");
   const [post, setPost] = useState(null);
   const postTrigger = useRef(null);
   const filtered = games.filter(
     (game) =>
-      filter === "All games" ||
-      (filter === "Play in browser"
+      filter === "all" ||
+      (filter === "play"
         ? game.versions.some((version) => version.webUrl)
-        : game.status === filter),
+        : game.status === (filter === "development" ? "In development" : "Released")),
   );
+  const filters = [
+    ["all", copy.filterAll],
+    ["play", copy.filterPlay],
+    ["development", copy.filterDevelopment],
+    ["released", copy.filterReleased],
+  ];
+  const emptyFilterName =
+    filter === "all"
+      ? copy.gamesNoun
+      : `${filters.find(([value]) => value === filter)[1].toLowerCase()} ${copy.gamesNoun}`;
   const title = site.heroTitle.split("\n");
   useEffect(() => {
     trackEvent("site_view", "home");
@@ -352,8 +370,7 @@ function Home({ content }) {
         <section className="hero container">
           <div className="hero-copy">
             <div className="hero-eyebrow">
-              <span className="live-dot" /> INDEPENDENT DEVELOPER. ENDLESS
-              CURIOSITY.
+              <span className="live-dot" /> {copy.heroEyebrow}
             </div>
             <h1>
               {title[0]}
@@ -363,10 +380,10 @@ function Home({ content }) {
             <p className="hero-description">{site.heroDescription}</p>
             <div className="hero-actions">
               <a className="button" href="#games">
-                Explore my games <ArrowUpRight size={18} />
+                {copy.heroPrimary} <ArrowUpRight size={18} />
               </a>
               <a className="text-link" href="#about">
-                A little about me <ArrowRight size={17} />
+                {copy.heroSecondary} <ArrowRight size={17} />
               </a>
             </div>
             <div className="hero-footnote">
@@ -382,30 +399,34 @@ function Home({ content }) {
                 </span>
               </div>
               <p>
-                Made with curiosity.
+                {copy.heroNoteFirst}
                 <br />
-                <strong>Better when shared.</strong>
+                <strong>{copy.heroNoteSecond}</strong>
               </p>
             </div>
           </div>
-          <Highlight highlight={site.highlight} games={games} />
+          <Highlight
+            highlight={site.highlight}
+            games={games}
+            copy={copy}
+          />
         </section>
         <div className="values-strip">
           <div className="container">
             <span>
-              <Gamepad2 size={18} /> Small, thoughtful games
+              <Gamepad2 size={18} /> {copy.valueOne}
             </span>
             <i />
             <span>
-              <Sprout size={18} /> Always learning, always making
+              <Sprout size={18} /> {copy.valueTwo}
             </span>
             <i />
             <span>
-              <Users size={18} /> Community at the heart
+              <Users size={18} /> {copy.valueThree}
             </span>
             <i />
             <span>
-              <Coffee size={18} /> A little caffeine-powered
+              <Coffee size={18} /> {copy.valueFour}
             </span>
           </div>
         </div>
@@ -413,71 +434,64 @@ function Home({ content }) {
           <div className="section-top">
             <div>
               <span className="eyebrow">
-                <span className="section-number">01 /</span> THE PLAYABLE SIDE
-                OF ME
+                <span className="section-number">01 /</span> {copy.gamesEyebrow}
               </span>
               <h2>
-                Find your next little escape<span className="green-dot">.</span>
+                {copy.gamesTitle}<span className="green-dot">.</span>
               </h2>
             </div>
             <span className="section-note">
-              Crafted with care.
+              {copy.gamesNoteFirst}
               <br />
-              Yours to explore.
+              {copy.gamesNoteSecond}
             </span>
           </div>
           <div className="filter-row">
-            <div className="filters" aria-label="Filter games">
-              {[
-                "All games",
-                "Play in browser",
-                "In development",
-                "Released",
-              ].map((item) => (
+            <div className="filters" aria-label={copy.filterLabel}>
+              {filters.map(([value, label]) => (
                 <button
-                  key={item}
-                  className={filter === item ? "selected" : ""}
-                  onClick={() => setFilter(item)}
+                  key={value}
+                  className={filter === value ? "selected" : ""}
+                  onClick={() => setFilter(value)}
                 >
-                  {item === "Play in browser" && <Play size={13} />}
-                  {item}
-                  {item === "All games" && (
+                  {value === "play" && <Play size={13} />}
+                  {label}
+                  {value === "all" && (
                     <span>{games.length.toString().padStart(2, "0")}</span>
                   )}
                 </button>
               ))}
             </div>
             <span className="filter-caption">
-              <Monitor size={14} /> A world beyond the screen
+              <Monitor size={14} /> {copy.filterCaption}
             </span>
           </div>
           <div className="game-grid">
             {filtered.map((game) => (
-              <GameCard key={game.id} game={game} />
+              <GameCard key={game.id} game={game} copy={copy} />
             ))}
           </div>
           {!filtered.length && (
             <div className="empty-state">
               <Sprout size={30} />
-              <h3>Something good is growing.</h3>
+              <h3>{copy.gamesEmptyTitle}</h3>
               <p>
-                No {filter.toLowerCase()} games just yet. Explore the other
-                projects in the meantime.
+                {copy.gamesEmptyPrefix} {emptyFilterName}{" "}
+                {copy.gamesEmptyDescription}
               </p>
               <button
                 className="button button-light"
-                onClick={() => setFilter("All games")}
+                onClick={() => setFilter("all")}
               >
-                See all games <ArrowRight size={16} />
+                {copy.gamesEmptyButton} <ArrowRight size={16} />
               </button>
             </div>
           )}
           <div className="games-note">
             <span>
-              <Heart size={15} /> Play a little. Leave a thought. Help a game
-              grow.
+              <Heart size={15} /> {copy.gamesNotePrimary}
             </span>
-            <span>Browser play · Downloads · Version history</span>
+            <span>{copy.gamesNoteSecondary}</span>
           </div>
         </section>
         <section className="about-section" id="about">
@@ -495,68 +509,64 @@ function Home({ content }) {
                       <Sprout size={78} strokeWidth={1.2} />
                     </span>
                     <span>
-                      hello, world<span className="blink">_</span>
+                      {copy.aboutArtGreeting}<span className="blink">_</span>
                     </span>
                   </div>
                 </div>
                 <div className="coffee-sticker">
                   <Coffee size={37} strokeWidth={1.4} />
-                  <span>one more idea.</span>
+                  <span>{copy.aboutArtSticker}</span>
                 </div>
                 <span className="sparkle-one">✳</span>
                 <span className="sparkle-two">+</span>
               </div>
               <span className="art-handwritten">
-                the person behind the pixels ↗
+                {copy.aboutArtCaption} ↗
               </span>
             </div>
             <div className="about-copy">
               <span className="eyebrow">
-                <span className="section-number">02 /</span> A HUMAN, NOT JUST A
-                HANDLE
+                <span className="section-number">02 /</span> {copy.aboutEyebrow}
               </span>
               <h2>
-                Hey, I’m Khoifee<span className="green-dot">.</span>
-                <br />I make things you can feel.
+                {copy.aboutTitle}
+                <br />
+                {copy.aboutSubtitle}
               </h2>
               <p className="preserve-lines">{site.about}</p>
               <div className="about-pills">
                 <span>
-                  <Gamepad2 size={15} /> Game developer
+                  <Gamepad2 size={15} /> {copy.aboutPillOne}
                 </span>
                 <span>
-                  <Sparkles size={15} /> Curious creator
+                  <Sparkles size={15} /> {copy.aboutPillTwo}
                 </span>
                 <span>
-                  <Users size={15} /> Community member
+                  <Users size={15} /> {copy.aboutPillThree}
                 </span>
               </div>
               <a className="text-link" href="#contact">
-                Let’s make something good together <ArrowUpRight size={18} />
+                {copy.aboutButton} <ArrowUpRight size={18} />
               </a>
             </div>
           </div>
         </section>
         <section className="section container community-section" id="community">
           <div className="community-panel">
-            <div className="community-symbol" aria-hidden="true">
-              <div>
-                <Sprout size={47} strokeWidth={1.3} />
-                <span>G A W A I N</span>
-                <small>GAME DEV GUILD</small>
-              </div>
+            <div className="community-symbol">
+              <img src="/assets/GawainGameDevLogo.jpg" alt="Gawain Game Dev Guild" />
               <i />
               <i />
             </div>
             <div className="community-copy">
-              <span className="eyebrow">GREAT THINGS AREN’T MADE ALONE</span>
+              <span className="eyebrow">{copy.communityEyebrow}</span>
               <h2>
-                Good people.
+                {copy.communityTitleFirst}
                 <br />
-                Even better possibilities.
+                {copy.communityTitleSecond}
               </h2>
               <p>
-                Proud to be part of <strong>{site.community.name}</strong>.
+                {copy.communityIntro} <strong>{site.community.name}</strong>.
               </p>
               <p>{site.community.description}</p>
               {safeLink(site.community.url) ? (
@@ -566,32 +576,31 @@ function Home({ content }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Meet the guild <ArrowUpRight size={16} />
+                  {copy.communityButton} <ArrowUpRight size={16} />
                 </a>
               ) : (
                 <span className="community-coming">
-                  <Users size={16} /> Guild link coming soon
+                  <Users size={16} /> {copy.communityPending}
                 </span>
               )}
             </div>
-            <span className="community-side">CREATE. CONNECT. GROW.</span>
+            <span className="community-side">{copy.communityTagline}</span>
           </div>
         </section>
         <section className="journal-section container" id="journal">
           <div className="section-top">
             <div>
               <span className="eyebrow">
-                <span className="section-number">03 /</span> NOTES FROM THE
-                WORKBENCH
+                <span className="section-number">03 /</span> {copy.journalEyebrow}
               </span>
               <h2>
-                A little behind the scenes<span className="green-dot">.</span>
+                {copy.journalTitle}<span className="green-dot">.</span>
               </h2>
             </div>
             <span className="section-note">
-              The process is part
+              {copy.journalNoteFirst}
               <br />
-              of the story.
+              {copy.journalNoteSecond}
             </span>
           </div>
           <div className="journal-grid">
@@ -623,37 +632,34 @@ function Home({ content }) {
                 <Sprout size={30} strokeWidth={1.4} />
               </span>
               <div>
-                <h3>Every game starts with a first note.</h3>
+                <h3>{copy.journalEmptyTitle}</h3>
                 <p>
-                  Dev diaries, small discoveries, and community stories will
-                  land here.
+                  {copy.journalEmptyDescription}
                 </p>
               </div>
-              <span className="eyebrow">GOOD THINGS TAKE A LITTLE TIME</span>
+              <span className="eyebrow">{copy.journalEmptyEyebrow}</span>
             </div>
           )}
         </section>
         <section className="contact-section container" id="contact">
           <div>
             <span className="eyebrow">
-              GOT AN IDEA, A QUESTION, OR JUST A HELLO?
+              {copy.contactEyebrow}
             </span>
             <h2>
-              Let’s make a little
+              {copy.contactTitleFirst}
               <br />
-              <em>something happen.</em>
+              <em>{copy.contactTitleSecond}</em>
             </h2>
-            <p>
-              Collaborations, conversations, and cool ideas are always welcome.
-            </p>
+            <p>{copy.contactDescription}</p>
             {site.email ? (
               <a className="button" href={`mailto:${site.email}`}>
-                Say hello <Mail size={17} />
+                {copy.contactButton} <Mail size={17} />
               </a>
             ) : (
               <div className="contact-pending">
                 <Mail size={17} />
-                <span>Contact details are on their way. Check back soon.</span>
+                <span>{copy.contactPending}</span>
               </div>
             )}
           </div>
@@ -663,17 +669,17 @@ function Home({ content }) {
             >
               <span className="live-dot" />
               {site.available
-                ? "OPEN TO GOOD CONVERSATIONS"
-                : "CURRENTLY HEADS-DOWN CREATING"}
+                ? copy.availabilityOpen
+                : copy.availabilityBusy}
             </span>
             <span className="contact-doodle" aria-hidden="true">
               <Coffee size={110} strokeWidth={1} />
               <Heart size={24} />
             </span>
-            <span className="eyebrow">FIND ME AROUND THE INTERNET</span>
+            <span className="eyebrow">{copy.socialEyebrow}</span>
             <Socials socials={site.socials} full />
             {!Object.values(site.socials).some(Boolean) && (
-              <small className="muted">Social links coming soon.</small>
+              <small className="muted">{copy.socialEmpty}</small>
             )}
           </div>
         </section>
@@ -708,7 +714,7 @@ function Home({ content }) {
                 target="_blank"
                 rel="noreferrer"
               >
-                Read the full story <ArrowUpRight size={17} />
+                {copy.readStory} <ArrowUpRight size={17} />
               </a>
             )}
           </section>
@@ -719,11 +725,12 @@ function Home({ content }) {
 }
 
 function GamePage({ id, site }) {
+  const copy = site.copy;
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [versionId, setVersionId] = useState("");
   const [playing, setPlaying] = useState(false);
-  const [tab, setTab] = useState("Overview");
+  const [tab, setTab] = useState("overview");
   const [rating, setRating] = useState(0);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -733,7 +740,9 @@ function GamePage({ id, site }) {
       .then((value) => {
         setData(value);
         setVersionId(value.game.versions[0]?.id || "");
-        document.title = `${value.game.title} — KhoifeeDev`;
+        document.title = `${value.game.title} — ${site.name}`;
+        const description = document.querySelector('meta[name="description"]');
+        if (description) description.content = value.game.summary;
         trackEvent("game_view", value.game.id);
       })
       .catch((err) => setError(err.message));
@@ -757,7 +766,7 @@ function GamePage({ id, site }) {
   async function submitReview(event) {
     event.preventDefault();
     if (!rating) {
-      setReviewError("Choose a star rating first.");
+      setReviewError(copy.gameRatingError);
       return;
     }
     const values = new FormData(event.currentTarget);
@@ -780,18 +789,18 @@ function GamePage({ id, site }) {
       <Header site={site} />
       <main className="container game-page">
         <a className="back-link" href="/#games">
-          <ArrowLeft size={15} /> Back to all games
+          <ArrowLeft size={15} /> {copy.gameBack}
         </a>
         {error ? (
           <div className="empty-state">
-            <h1>That little world isn’t here.</h1>
+            <h1>{copy.gameMissingTitle}</h1>
             <p>{error}</p>
             <a className="button" href="/#games">
-              Explore the games
+              {copy.gameMissingButton}
             </a>
           </div>
         ) : !game ? (
-          <Loading />
+          <Loading text={copy.loadingText} />
         ) : (
           <>
             <div className="game-page-heading">
@@ -809,7 +818,9 @@ function GamePage({ id, site }) {
                 <div className="game-rating">
                   <Star fill="currentColor" />
                   {Number(game.rating).toFixed(1)}
-                  <small>{game.count} ratings</small>
+                  <small>
+                    {game.count} {copy.gameRatingsUnit}
+                  </small>
                 </div>
               )}
             </div>
@@ -817,9 +828,8 @@ function GamePage({ id, site }) {
               <div className="sample-banner">
                 <Sprout size={18} />
                 <span>
-                  <strong>A concept, for now.</strong> This is sample content
-                  showing what a game page can look like. No playable build has
-                  been published.
+                  <strong>{copy.gameSampleTitle}</strong>{" "}
+                  {copy.gameSampleDescription}
                 </span>
               </div>
             )}
@@ -835,19 +845,23 @@ function GamePage({ id, site }) {
                     />
                   ) : (
                     <>
-                      <Image src={game.cover} alt={`${game.title} artwork`} />
+                      <Image
+                        src={game.cover}
+                        alt={`${game.title} artwork`}
+                        style={imagePositionStyle(game.coverPosition)}
+                      />
                       <div className="player-overlay">
                         {version?.webUrl ? (
                           <button
                             className="button"
                             onClick={() => startPlaying()}
                           >
-                            <Play size={19} fill="currentColor" /> Play in
-                            browser
+                            <Play size={19} fill="currentColor" />
+                            {copy.gamePlayButton}
                           </button>
                         ) : (
                           <span className="player-pending">
-                            <Gamepad2 size={22} /> A little world in the making
+                            <Gamepad2 size={22} /> {copy.gameNotReady}
                           </span>
                         )}
                       </div>
@@ -858,8 +872,8 @@ function GamePage({ id, site }) {
                   <span>
                     <Monitor size={15} />
                     {playing
-                      ? "Click inside the game to focus controls"
-                      : "Browser play, right here when it’s ready"}
+                      ? copy.gamePlayerFocus
+                      : copy.gamePlayerHint}
                   </span>
                   {playing && (
                     <button
@@ -870,32 +884,36 @@ function GamePage({ id, site }) {
                           .requestFullscreen?.()
                       }
                     >
-                      <Maximize size={15} /> Fullscreen
+                      <Maximize size={15} /> {copy.gameFullscreen}
                     </button>
                   )}
                 </div>
                 <div className="detail-tabs" role="tablist">
-                  {["Overview", "Version history", "Comments"].map((item) => (
+                  {[
+                    ["overview", copy.gameOverviewTab],
+                    ["versions", copy.gameVersionsTab],
+                    ["comments", copy.gameCommentsTab],
+                  ].map(([value, label]) => (
                     <button
-                      key={item}
+                      key={value}
                       role="tab"
-                      aria-selected={tab === item}
-                      className={tab === item ? "selected" : ""}
-                      onClick={() => setTab(item)}
+                      aria-selected={tab === value}
+                      className={tab === value ? "selected" : ""}
+                      onClick={() => setTab(value)}
                     >
-                      {item}
-                      {item === "Comments" && (
+                      {label}
+                      {value === "comments" && (
                         <span>{data.reviews.length}</span>
                       )}
                     </button>
                   ))}
                 </div>
                 <section className="detail-content" role="tabpanel">
-                  {tab === "Overview" && (
+                  {tab === "overview" && (
                     <>
-                      <h2>A little about this world</h2>
+                      <h2>{copy.gameOverviewTitle}</h2>
                       <p className="preserve-lines">{game.description}</p>
-                      <h3>The little details</h3>
+                      <h3>{copy.gameDetailsTitle}</h3>
                       <div className="tags">
                         {game.tags.map((tag) => (
                           <span key={tag}>{tag}</span>
@@ -903,12 +921,11 @@ function GamePage({ id, site }) {
                       </div>
                     </>
                   )}
-                  {tab === "Version history" && (
+                  {tab === "versions" && (
                     <>
-                      <h2>Every version has a story.</h2>
+                      <h2>{copy.gameVersionsTitle}</h2>
                       <p className="muted">
-                        Pick a release to play an earlier build or download a
-                        copy.
+                        {copy.gameVersionsDescription}
                       </p>
                       {game.versions.length ? (
                         game.versions.map((item, index) => (
@@ -917,7 +934,7 @@ function GamePage({ id, site }) {
                               <h3>
                                 {item.label}{" "}
                                 {index === 0 && (
-                                  <span className="badge">LATEST</span>
+                                  <span className="badge">{copy.gameLatest}</span>
                                 )}
                               </h3>
                               <span className="muted">
@@ -926,7 +943,7 @@ function GamePage({ id, site }) {
                             </div>
                             <p className="preserve-lines">
                               {item.notes ||
-                                "No release notes for this version."}
+                                copy.gameNoReleaseNotes}
                             </p>
                             <div className="version-actions">
                               {item.webUrl && (
@@ -940,7 +957,7 @@ function GamePage({ id, site }) {
                                     });
                                   }}
                                 >
-                                  <Play size={14} /> Play this version
+                                  <Play size={14} /> {copy.gamePlayVersion}
                                 </button>
                               )}
                               {item.downloads.map((file) => (
@@ -956,7 +973,7 @@ function GamePage({ id, site }) {
                               ))}
                               {!item.webUrl && !item.downloads.length && (
                                 <span className="muted">
-                                  Builds haven’t been uploaded for this version.
+                                  {copy.gameNoBuilds}
                                 </span>
                               )}
                             </div>
@@ -964,36 +981,32 @@ function GamePage({ id, site }) {
                         ))
                       ) : (
                         <p className="empty-inline">
-                          The first chapter is still being written. No releases
-                          yet.
+                          {copy.gameNoReleases}
                         </p>
                       )}
                     </>
                   )}
-                  {tab === "Comments" && (
+                  {tab === "comments" && (
                     <>
-                      <h2>A thought can go a long way.</h2>
-                      <p className="muted">
-                        Played it? Share a kind, honest review. Comments appear
-                        after approval.
-                      </p>
+                      <h2>{copy.gameCommentsTitle}</h2>
+                      <p className="muted">{copy.gameReviewIntro}</p>
                       {sent ? (
                         <div className="success-box">
                           <Check size={24} />
                           <div>
-                            <h3>Thanks for helping this game grow.</h3>
-                            <p>Your review has been submitted for approval.</p>
+                            <h3>{copy.gameReviewSuccessTitle}</h3>
+                            <p>{copy.gameReviewSuccessDescription}</p>
                           </div>
                         </div>
                       ) : (
                         <form className="review-form" onSubmit={submitReview}>
                           <fieldset className="star-picker">
-                            <legend>Your rating</legend>
+                            <legend>{copy.gameRatingLabel}</legend>
                             {[1, 2, 3, 4, 5].map((value) => (
                               <button
                                 type="button"
                                 key={value}
-                                aria-label={`Rate ${value} ${value === 1 ? "star" : "stars"}`}
+                                aria-label={`Rate ${value} ${value === 1 ? copy.gameStarSingular : copy.gameStarPlural}`}
                                 aria-pressed={rating === value}
                                 onClick={() => setRating(value)}
                               >
@@ -1006,42 +1019,41 @@ function GamePage({ id, site }) {
                               </button>
                             ))}
                             <span>
-                              {rating ? `${rating} / 5` : "Choose a rating"}
+                              {rating ? `${rating} / 5` : copy.gameChooseRating}
                             </span>
                           </fieldset>
                           <label>
-                            Your name
+                            {copy.gameNameLabel}
                             <input
                               name="name"
                               minLength={2}
                               maxLength={60}
                               required
-                              placeholder="What should we call you?"
+                              placeholder={copy.gameNamePlaceholder}
                               autoComplete="nickname"
                             />
                           </label>
                           <label>
-                            Your thoughts
+                            {copy.gameThoughtsLabel}
                             <textarea
                               name="body"
                               minLength={5}
                               maxLength={2000}
                               required
                               rows={4}
-                              placeholder="What stayed with you? What could be better?"
+                              placeholder={copy.gameThoughtsPlaceholder}
                             />
                           </label>
-                          <p className="form-note">
-                            Your name, rating, and comment will be public after
-                            approval. Please don’t share personal information.
-                          </p>
+                          <p className="form-note">{copy.gameReviewPrivacy}</p>
                           {reviewError && (
                             <p className="error-message" role="alert">
                               {reviewError}
                             </p>
                           )}
                           <button className="button" disabled={sending}>
-                            {sending ? "Sending…" : "Leave a little feedback"}
+                            {sending
+                              ? copy.gameReviewSending
+                              : copy.gameReviewSubmit}
                             <MessageCircle size={16} />
                           </button>
                         </form>
@@ -1065,7 +1077,7 @@ function GamePage({ id, site }) {
                           ))
                         ) : (
                           <p className="empty-inline">
-                            No reviews yet. Yours could be the first.
+                            {copy.gameNoReviews}
                           </p>
                         )}
                       </div>
@@ -1075,11 +1087,11 @@ function GamePage({ id, site }) {
               </div>
               <aside className="game-sidebar">
                 <div className="sidebar-card">
-                  <span className="eyebrow">YOUR NEXT LITTLE ESCAPE</span>
-                  <h3>Ready when you are.</h3>
+                  <span className="eyebrow">{copy.gameSidebarEyebrow}</span>
+                  <h3>{copy.gameReadyTitle}</h3>
                   {game.versions.length > 0 && (
                     <label>
-                      Game version
+                      {copy.gameVersionLabel}
                       <div className="select-wrap">
                         <select
                           value={versionId}
@@ -1091,7 +1103,9 @@ function GamePage({ id, site }) {
                           {game.versions.map((item, index) => (
                             <option key={item.id} value={item.id}>
                               {item.label}
-                              {index === 0 ? " — latest" : ""}
+                              {index === 0
+                                ? ` — ${copy.gameLatest.toLowerCase()}`
+                                : ""}
                             </option>
                           ))}
                         </select>
@@ -1111,12 +1125,12 @@ function GamePage({ id, site }) {
                       }}
                     >
                       <Play size={16} fill="currentColor" />
-                      Play in browser
+                      {copy.filterPlay}
                     </button>
                   ) : (
                     <div className="not-ready">
                       <Monitor size={19} />
-                      Web build coming soon
+                      {copy.gameBuildPending}
                     </div>
                   )}
                   {version?.downloads.map((file) => (
@@ -1133,12 +1147,12 @@ function GamePage({ id, site }) {
                   ))}
                   <p className="form-note">
                     {version?.webUrl
-                      ? "Desktop recommended. Check the controls below before you dive in."
-                      : "Follow along as this game takes shape. Published builds will appear here."}
+                      ? copy.gameDesktopHint
+                      : copy.gameComingAlongHint}
                   </p>
                   <div className="sidebar-divider" />
                   <h4>
-                    <Gamepad2 size={17} /> How to play
+                    <Gamepad2 size={17} /> {copy.gameInstructions}
                   </h4>
                   {game.controls.length ? (
                     <dl className="controls-list">
@@ -1153,26 +1167,24 @@ function GamePage({ id, site }) {
                     </dl>
                   ) : (
                     <p className="muted">
-                      Controls will be added with the first playable build.
+                      {copy.gameControlsPending}
                     </p>
                   )}
                 </div>
                 <div className="feedback-aside">
                   <Heart size={24} />
-                  <h4>Small feedback. Big difference.</h4>
-                  <p>
-                    Your thoughts help make the next version a little better.
-                  </p>
+                  <h4>{copy.gameFeedbackTitle}</h4>
+                  <p>{copy.gameFeedbackDescription}</p>
                   <button
                     className="text-link"
                     onClick={() => {
-                      setTab("Comments");
+                      setTab("comments");
                       document
                         .querySelector(".detail-tabs")
                         .scrollIntoView({ behavior: "smooth" });
                     }}
                   >
-                    Leave a review <ArrowRight size={15} />
+                    {copy.gameLeaveReview} <ArrowRight size={15} />
                   </button>
                 </div>
               </aside>
@@ -1185,11 +1197,11 @@ function GamePage({ id, site }) {
   );
 }
 
-function Loading() {
+function Loading({ text = "Growing a little something…" }) {
   return (
     <div className="loading-state" role="status">
       <Sprout className="loading-leaf" size={36} />
-      <p>Growing a little something…</p>
+      <p>{text}</p>
     </div>
   );
 }
@@ -1206,6 +1218,12 @@ export default function App() {
       .then(setContent)
       .catch((err) => setError(err.message));
   }, [isStudio]);
+  useEffect(() => {
+    if (!content || isStudio) return;
+    document.title = `${content.site.name} — ${content.site.heroTitle.replace(/\s+/g, " ").trim()}`;
+    const description = document.querySelector('meta[name="description"]');
+    if (description) description.content = content.site.heroDescription;
+  }, [content, isStudio]);
   if (isStudio) return <Studio />;
   if (error)
     return (
@@ -1234,10 +1252,10 @@ export default function App() {
         <Header site={content.site} />
         <main className="container empty-state">
           <Sprout size={40} />
-          <h1>A little off the path.</h1>
-          <p>This page doesn’t exist, but there are other worlds to explore.</p>
+          <h1>{content.site.copy.notFoundTitle}</h1>
+          <p>{content.site.copy.notFoundDescription}</p>
           <a className="button" href="/">
-            Take me home <ArrowRight size={17} />
+            {content.site.copy.notFoundButton} <ArrowRight size={17} />
           </a>
         </main>
         <Footer site={content.site} />

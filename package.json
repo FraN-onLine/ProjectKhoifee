@@ -7,7 +7,7 @@
     "node": ">=22.11.0"
   },
   "scripts": {
-    "dev": "concurrently -k -n api,web \"node --experimental-sqlite server/index.mjs\" \"vite --host 127.0.0.1\"",
+    "dev": "node --experimental-sqlite scripts/dev.mjs",
     "build": "vite build",
     "import-build": "node --experimental-sqlite server/import-build.mjs",
     "start": "cross-env NODE_ENV=production node --experimental-sqlite server/index.mjs",

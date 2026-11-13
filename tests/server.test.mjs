@@ -486,10 +486,30 @@ test("all editable content is validated, including unsafe URLs and nested fields
   const valid = structuredClone(content.site);
   valid.socials.itch = "https://example.itch.io/";
   valid.highlight.image = "/uploads/images/example/cover.png";
+  valid.highlight.imagePosition = { x: 25, y: 75 };
   assert.equal(
     (await api.request("/api/admin/site", { method: "PUT", body: valid }))
       .status,
     200,
+  );
+  assert.deepEqual(
+    (await api.request("/api/site")).body.site.highlight.imagePosition,
+    { x: 25, y: 75 },
+  );
+  assert.equal(
+    (
+      await api.request("/api/admin/site", {
+        method: "PUT",
+        body: {
+          ...valid,
+          highlight: {
+            ...valid.highlight,
+            imagePosition: { x: 101, y: 50 },
+          },
+        },
+      })
+    ).status,
+    400,
   );
   assert.equal(
     (
@@ -608,6 +628,7 @@ test("admin CRUD honors visibility and never accepts fabricated rating metrics",
     id: "new-project",
     title: "My actual project",
     sample: false,
+    coverPosition: { x: 25, y: 75 },
     rating: 5,
     count: 999,
   };
@@ -618,6 +639,22 @@ test("admin CRUD honors visibility and never accepts fabricated rating metrics",
   assert.equal(created.status, 200);
   assert.equal(created.body.game.rating, 0);
   assert.equal(created.body.game.count, 0);
+  assert.deepEqual(created.body.game.coverPosition, { x: 25, y: 75 });
+  assert.deepEqual(
+    (await api.request("/api/site")).body.games.find(
+      (item) => item.id === "new-project",
+    ).coverPosition,
+    { x: 25, y: 75 },
+  );
+  assert.equal(
+    (
+      await api.request("/api/admin/games/new-project", {
+        method: "PUT",
+        body: { ...game, coverPosition: { x: -1, y: 50 } },
+      })
+    ).status,
+    400,
+  );
   assert.equal((await api.request("/api/site")).body.games.length, 4);
   assert.equal(
     (

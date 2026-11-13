@@ -58,6 +58,36 @@ function Toggle({ label, checked, onChange, description }) {
     </label>
   );
 }
+function ImagePositionFields({ position, onChange }) {
+  const x = position?.x ?? 50;
+  const y = position?.y ?? 50;
+  return (
+    <fieldset className="image-position-controls">
+      <legend>Adjust image framing</legend>
+      {[
+        ["Horizontal", x, "x"],
+        ["Vertical", y, "y"],
+      ].map(([label, value, axis]) => (
+        <label className="image-position-field" key={axis}>
+          <span>
+            {label} position <strong>{value}%</strong>
+          </span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={value}
+            aria-label={`${label} image position`}
+            onChange={(event) =>
+              onChange({ ...position, [axis]: Number(event.target.value) })
+            }
+          />
+        </label>
+      ))}
+    </fieldset>
+  );
+}
 function UploadField({ kind, onUploaded, label = "Upload file" }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -129,6 +159,30 @@ function SaveButton({ saving, children = "Save changes" }) {
     </button>
   );
 }
+
+const pageCopyGroups = [
+  { title: "Navigation and introduction", matches: /^(nav|hero)/ },
+  { title: "Games and highlights", matches: /^(value|games|filter|highlight|card)/ },
+  { title: "About and community", matches: /^(about|community)/ },
+  { title: "Journal and contact", matches: /^(journal|contact|availability|social)/ },
+  { title: "Game pages and feedback", matches: /^game/ },
+  { title: "Footer and other page text", matches: /^(footer|privacy|readStory|loading|notFound)/ },
+];
+const pageCopyAreas = new Set([
+  "journalEmptyDescription",
+  "contactDescription",
+  "privacyDescription",
+  "gameSampleDescription",
+  "gameNoReleases",
+  "gameReviewIntro",
+  "gameReviewPrivacy",
+  "gameThoughtsPlaceholder",
+  "gameControlsPending",
+  "gameFeedbackDescription",
+  "gameDesktopHint",
+  "gameComingAlongHint",
+  "notFoundDescription",
+]);
 
 function SiteEditor({ site, onSave, saving, spotlight = false, games }) {
   const [draft, setDraft] = useState(site);
@@ -253,10 +307,17 @@ function SiteEditor({ site, onSave, saving, spotlight = false, games }) {
             label="Upload feature image"
             onUploaded={(url) => updateHighlight("image", url)}
           />
+          <ImagePositionFields
+            position={draft.highlight.imagePosition}
+            onChange={(value) => updateHighlight("imagePosition", value)}
+          />
           <img
             className="editor-image-preview"
             src={draft.highlight.image || "/art/greenhouse.svg"}
             alt="Highlight preview"
+            style={{
+              objectPosition: `${draft.highlight.imagePosition?.x ?? 50}% ${draft.highlight.imagePosition?.y ?? 50}%`,
+            }}
           />
         </div>
       ) : (
@@ -308,6 +369,44 @@ function SiteEditor({ site, onSave, saving, spotlight = false, games }) {
               onChange={(value) => update("available", value)}
               description="Show your availability in the contact section."
             />
+          </section>
+          <section className="editor-panel page-copy-editor">
+            <h3>
+              <FileText size={19} /> Website text
+            </h3>
+            <p className="form-note">
+              Edit public headings, labels, buttons, helper text, and other
+              wording. Changes go live when you save.
+            </p>
+            {pageCopyGroups.map(({ title, matches }) => {
+              const keys = Object.keys(draft.copy).filter((key) =>
+                matches.test(key),
+              );
+              if (!keys.length) return null;
+              return (
+                <details className="page-copy-group" key={title}>
+                  <summary>
+                    {title} <span>{keys.length} text fields</span>
+                  </summary>
+                  <div className="form-grid">
+                    {keys.map((key) => (
+                      <Field
+                        key={key}
+                        label={key
+                          .replace(/([A-Z])/g, " $1")
+                          .replace(/^./, (letter) => letter.toUpperCase())}
+                        value={draft.copy[key]}
+                        onChange={(value) =>
+                          update("copy", { ...draft.copy, [key]: value })
+                        }
+                        maxLength={2000}
+                        area={pageCopyAreas.has(key)}
+                      />
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
           </section>
           <section className="editor-panel">
             <h3>
@@ -548,10 +647,17 @@ function GameEditor({ game, onSave, saving, onBack }) {
           label="Upload game artwork"
           onUploaded={(url) => update("cover", url)}
         />
+        <ImagePositionFields
+          position={draft.coverPosition}
+          onChange={(value) => update("coverPosition", value)}
+        />
         <img
           className="editor-image-preview"
           src={draft.cover || "/art/greenhouse.svg"}
           alt="Cover preview"
+          style={{
+            objectPosition: `${draft.coverPosition?.x ?? 50}% ${draft.coverPosition?.y ?? 50}%`,
+          }}
         />
         <div className="toggle-row">
           <Toggle
@@ -901,7 +1007,7 @@ function Login({ setup, onLoggedIn }) {
         Back to the site
       </a>
       <form className="login-card" onSubmit={submit}>
-        <img src="/favicon.svg" width="48" height="48" alt="" />
+        <img src="/assets/KhoifeeLogo.jpg" width="48" height="48" alt="" />
         <span className="eyebrow">KHOIFEEDEV / CREATOR STUDIO</span>
         <h1>
           {setup ? "Your next chapter starts here." : "Welcome back, creator."}
@@ -981,6 +1087,20 @@ export default function Studio() {
   }
   useEffect(() => {
     document.title = "Creator studio — KhoifeeDev";
+    let robots = document.querySelector('meta[name="robots"]');
+    const originalRobots = robots?.content;
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.append(robots);
+    }
+    robots.content = "noindex, nofollow";
+    return () => {
+      if (originalRobots === undefined) robots.remove();
+      else robots.content = originalRobots;
+    };
+  }, []);
+  useEffect(() => {
     refresh().catch((err) => setError(err.message));
   }, []);
   useEffect(() => {
@@ -1079,7 +1199,7 @@ export default function Studio() {
     <div className="studio-layout">
       <aside className="studio-sidebar">
         <a className="brand" href="/">
-          <img src="/favicon.svg" alt="" />
+          <img src="/assets/KhoifeeLogo.jpg" alt="" />
           <span>
             Khoifee<span className="brand-light">Dev</span>.
           </span>

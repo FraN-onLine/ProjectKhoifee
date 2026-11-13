@@ -163,7 +163,7 @@ test.beforeAll(async () => {
   await access(path.join(ROOT, 'dist', 'index.html'));
   await mkdir(OUTPUT, { recursive: true });
   dataDir = await mkdtemp(path.join(os.tmpdir(), 'khoifee-browser-'));
-  app = createApp({ dataDir, bootstrapToken: TOKEN, production: true });
+  app = createApp({ dataDir, bootstrapToken: TOKEN, production: true, authLimit: 100 });
   server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   origin = `http://127.0.0.1:${server.address().port}`;
@@ -321,6 +321,8 @@ test('desktop production home: local fonts, all filters, empty states and screen
   const page = await actors.page();
   await home(page);
   await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /^Explore A little world to get lost in\./ })).toBeVisible();
+  await expect(page.locator('.game-card-action').first()).toContainText('Take a closer look');
   await expect(page.getByRole('heading', { level: 3 }).filter({ hasText: /^(Little Green World|After the Rain|One More Day)$/ })).toHaveCount(3);
   const fonts = await page.evaluate(() => ({
     loaded: [...document.fonts].filter(font => font.status === 'loaded').map(font => font.family),
@@ -396,6 +398,7 @@ test('first-run UI: token required, short password rejected, valid setup opens p
   const page = await actors.page();
   await page.goto('/studio');
   await expect(page.getByRole('heading', { name: 'Your next chapter starts here.' })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
   await page.getByRole('button', { name: 'Create my studio' }).click();
   expect(await page.getByLabel('Setup token').evaluate(element => element.validity.valueMissing)).toBe(true);
   await page.getByLabel('Setup token').fill(TOKEN);
@@ -419,26 +422,47 @@ test('portfolio introduction and spotlight edits persist and render publicly', a
   const visitor = await actors.page();
   await studio(admin);
   await admin.getByRole('textbox', { name: 'Introduction', exact: true }).fill(INTRODUCTION);
+  await admin.locator('.page-copy-group').first().locator('summary').click();
+  await admin.getByLabel('Hero Eyebrow', { exact: true }).fill('MADE BY AN INDEPENDENT GAME DEVELOPER');
+  await admin.locator('.page-copy-group').nth(4).locator('summary').click();
+  await admin.getByLabel('Game Comments Title', { exact: true }).fill('Leave a note about this world');
   await save(admin);
   await home(visitor);
   await expect(visitor.getByText(INTRODUCTION, { exact: true })).toBeVisible();
+  await expect(visitor.getByText('MADE BY AN INDEPENDENT GAME DEVELOPER', { exact: true })).toBeVisible();
+  await expect(visitor.locator('.site-header .brand img')).toHaveAttribute('src', '/assets/KhoifeeLogo.jpg');
+  await expect(visitor.locator('.community-symbol img')).toHaveAttribute('src', '/assets/GawainGameDevLogo.jpg');
+  await visitor.goto('/games/little-green-world');
+  await visitor.getByRole('tab', { name: 'Comments' }).click();
+  await expect(visitor.getByRole('heading', { name: 'Leave a note about this world', exact: true })).toBeVisible();
+  await visitor.goto('/');
+  await expect(visitor.getByRole('link', { name: /Creator studio/ })).toHaveCount(0);
+  await expect(admin.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
   await studioTab(admin, 'Spotlight');
   await admin.getByRole('combobox', { name: 'Highlight type', exact: true }).selectOption('game');
   await admin.getByLabel('Small label', { exact: true }).fill('BROWSER SPOTLIGHT');
   await admin.getByLabel('Title', { exact: true }).fill('An edited browser spotlight');
   await admin.getByRole('textbox', { name: 'Description', exact: true }).fill('Spotlight saved through the private studio.');
   await admin.getByLabel('Featured game').selectOption('after-the-rain');
+  await admin.getByLabel('Horizontal image position').press('Home');
+  await admin.getByLabel('Vertical image position').press('End');
+  await expect(admin.locator('.editor-image-preview')).toHaveAttribute('style', /object-position: 0% 100%/);
   await save(admin);
   await visitor.reload();
   await expect(visitor.getByRole('heading', { name: 'An edited browser spotlight', exact: true })).toBeVisible();
   await expect(visitor.getByText('BROWSER SPOTLIGHT', { exact: true })).toBeVisible();
   await expect(visitor.getByText('Spotlight saved through the private studio.', { exact: true })).toBeVisible();
+  await expect.poll(() =>
+    visitor.getByAltText('After the Rain concept illustration').evaluate((image) => image.style.objectPosition),
+  ).toBe('0% 100%');
   await visitor.getByRole('link', { name: 'Explore An edited browser spotlight', exact: true }).click();
   await expect(visitor.getByRole('heading', { level: 1 })).toHaveText('After the Rain.');
   await admin.reload();
   await expect(admin.getByRole('textbox', { name: 'Introduction', exact: true })).toHaveValue(INTRODUCTION);
   await studioTab(admin, 'Spotlight');
   await expect(admin.getByLabel('Title', { exact: true })).toHaveValue('An edited browser spotlight');
+  await expect(admin.getByLabel('Horizontal image position')).toHaveValue('0');
+  await expect(admin.getByLabel('Vertical image position')).toHaveValue('100');
 });
 
 test('publish a non-sample game, upload web ZIP, interact with isolated iframe and download ZIP', async ({ actors }, testInfo) => {

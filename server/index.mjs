@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createStorage } from "./storage.mjs";
+import { seedSite } from "./seed.mjs";
 
 const projectDir = fileURLToPath(new URL("../", import.meta.url));
 const scryptAsync = promisify(scrypt);
@@ -164,6 +165,12 @@ const dateSchema = text(10).refine(
 );
 const uniqueIds = (values) =>
   new Set(values.map((value) => value.id)).size === values.length;
+const imagePositionSchema = z
+  .object({
+    x: z.number().int().min(0).max(100),
+    y: z.number().int().min(0).max(100),
+  })
+  .strict();
 const siteSchema = z
   .object({
     name: text(80, 1),
@@ -184,6 +191,10 @@ const siteSchema = z
     community: z
       .object({ name: text(120), description: text(2000), url: urlSchema })
       .strict(),
+    copy: z
+      .record(z.string(), text(2000))
+      .default(seedSite.copy)
+      .refine((copy) => Object.keys(copy).length <= 200, "Too many page text fields"),
     highlight: z
       .object({
         eyebrow: text(100),
@@ -193,6 +204,7 @@ const siteSchema = z
         url: urlSchema,
         videoUrl: urlSchema,
         image: urlSchema,
+        imagePosition: imagePositionSchema.optional(),
         gameId: z.union([z.literal(""), idSchema]),
       })
       .strict(),
@@ -205,6 +217,7 @@ export const gameSchema = z
     summary: text(500),
     description: text(30000),
     cover: urlSchema,
+    coverPosition: imagePositionSchema.optional(),
     genre: text(100),
     tags: z.array(text(50, 1)).max(20),
     status: text(80),
@@ -674,6 +687,7 @@ export function createApp({
   dataDir = path.join(projectDir, "data"),
   bootstrapToken,
   production = process.env.NODE_ENV === "production",
+  authLimit = 10,
   now = Date.now,
 } = {}) {
   dataDir = path.resolve(dataDir);
@@ -740,7 +754,7 @@ export function createApp({
   };
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 10,
+    limit: authLimit,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     handler: (req, res) =>

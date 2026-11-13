@@ -276,7 +276,15 @@ export function createStorage(dataDir, { now = Date.now } = {}) {
         .all()
         .map((row) => JSON.parse(row.content))
         .filter((post) => !publicOnly || post.visible);
-      return { site: JSON.parse(getSetting.get("site").value), games, posts };
+      const savedSite = JSON.parse(getSetting.get("site").value);
+      return {
+        site: {
+          ...savedSite,
+          copy: { ...seedSite.copy, ...savedSite.copy },
+        },
+        games,
+        posts,
+      };
     },
     game(id, { publicOnly = false } = {}) {
       const row = statements.games.one.get(id);
